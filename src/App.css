@@ -1,0 +1,302 @@
+#main {
+  background-color: var(--background);
+  height: 100dvh;
+  width: 100vw;
+  gap: 1px;
+}
+
+.left-bar {
+  min-width: 50px;
+  height: 100%;
+  background-color: var(--white);
+}
+
+.right {
+  height: 100%;
+  gap: 1px;
+}
+
+.top-bar {
+  background-color: var(--white);
+  height: 60px;
+}
+
+.tabs {
+  min-height: 41px;
+  background-color: var(--white);
+  overflow-x: auto;
+  max-width: calc(100vw - 52px);
+  padding-right: 40px;
+  overflow-y: hidden;
+}
+
+.tab-container.next-tab,
+.tab-container.next-tab * {
+  cursor: grabbing;
+}
+
+.tab-container.forbidden,
+.tab-container.forbidden * {
+  cursor: no-drop;
+}
+
+.tab-container:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 100%;
+  background-color: transparent;
+  z-index: 1;
+}
+
+.unpinned-tabs .tab-container:before {
+  width: 100%;
+  height: 2px;
+}
+
+.tab-container.next-tab:before {
+  background-color: var(--highlight);
+}
+
+.tab-container.forbidden:before {
+  background-color: rgb(255, 63, 63);
+}
+
+.tab-container.forbidden .tab {
+  color: rgb(255, 63, 63);
+  background-color: rgb(255, 233, 233);
+}
+
+.tab {
+  padding: 0 8px 0 15px;
+  gap: 10px;
+  height: 40px;
+  border-bottom: 1px solid var(--background);
+  background-color: var(--white);
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.tab.pinned-tab {
+  padding: 0 15px;
+}
+
+.tab:hover,
+.tab.active {
+  background-color: var(--background);
+  color: var(--text-color2);
+}
+
+.dragging .tab {
+  opacity: 0;
+}
+
+.tab .icon {
+  min-width: 15px;
+}
+
+.tab span {
+  text-wrap: nowrap;
+  font-size: .8rem;
+}
+
+.tab:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 40%;
+  background-color: var(--border);
+}
+
+.dragging .tab:before {
+  background-color: transparent;
+}
+
+.tab:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -1px;
+  width: 100%;
+  height: 2px;
+  background-color: transparent;
+}
+
+.unpinned-tabs .tab:after {
+  width: 2px;
+  height: 100%;
+}
+
+.pinned-tab:hover:after {
+  background-color: var(--text-color);
+}
+
+.tab.active:after {
+  background-color: var(--highlight);
+}
+
+.tab-container {
+  background-color: var(--background);
+}
+
+.tab-container.forbidden .tab:after {
+  background-color: transparent;
+}
+
+.dragging .tab:after,
+.next-tab .tab:after {
+  opacity: 0
+}
+
+.tab .close-btn {
+  color: var(--text-color);
+}
+
+.tab:hover .close-btn {
+  opacity: 1;
+}
+
+.tab .close-btn,
+.dragging .tab .close-btn {
+  opacity: 0;
+}
+
+.tab .close-btn:hover {
+  color: rgb(255, 63, 63);
+}
+
+.tab .pin-tab-btn {
+  gap: 10px;
+  top: calc(100% + 15px);
+  transform: translateX(-50%);
+  left: 50%;
+  padding: 10px 15px;
+  background-color: var(--white);
+  display: none;
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.1),
+    0 3px 20px rgba(0, 0, 0, 0.05);
+}
+
+.tab:hover .pin-tab-btn {
+  display: flex;
+}
+
+.more-tabs {
+  top: 0;
+  right: 0;
+}
+
+.more-tabs-btn {
+  height: 40px;
+  width: 30px;
+  background-color: var(--white);
+  color: var(--text-color);
+  border-left: 1px solid var(--border);
+  box-shadow:
+    -15px 0px 15px var(--white),
+    -15px 0px 30px rgba(255, 255, 255, 0.5);
+}
+
+.more-tabs-btn:hover,
+.more-tabs-btn.active {
+  background-color: var(--highlight);
+  color: var(--white);
+}
+
+.more-tabs-btn.active .icon {
+  transform: rotate(180deg);
+}
+
+.workspace {
+  padding: 20px;
+}
+
+.board {
+  background-color: var(--white);
+}
+
+
+.tabs::-webkit-scrollbar {
+  height: 7px;
+}
+
+.tabs::-webkit-scrollbar-track {
+  background: var(--white);
+}
+
+.tabs::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+  border: 2px solid var(--white);
+}
+
+.tabs::-webkit-scrollbar-thumb:hover {
+  background: var(--border);
+}
+
+.unpinned-tabs {
+  top: calc(100% + 5px);
+  right: 5px;
+  z-index: 1;
+  border: 1px solid var(--border);
+  box-shadow:
+    0 5px 10px rgba(0, 0, 0, 0.05),
+    0 8px 20px rgba(0, 0, 0, 0.02);
+}
+
+.unpinned-tabs .tab:before {
+  opacity: 0;
+}
+
+.unpinned-tabs .tab .close-btn:hover {
+  color: var(--highlight);
+}
+
+.box {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 40px;
+  padding: 0 15px;
+  background-color: var(--text-color);
+  color: var(--white);
+  gap: 10px;
+  font-size: .8rem;
+  transition: transform .05s ease;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.error-msg {
+  top: 10px;
+  left: 50%;
+  gap: 10px;
+  transform: translateX(-50%);
+  background-color: rgb(255, 249, 249);
+  border: 1px solid rgb(255, 241, 241);
+  color: rgb(255, 92, 92);
+  padding: 0 10px 0 15px;
+  height: 40px;
+  font-size: .75rem;
+  box-shadow:
+    0 5px 10px rgba(139, 18, 18, 0.1),
+    0 5px 20px rgba(139, 18, 18, 0.05);
+}
+
+.error-msg button {
+  margin-left: 10px;
+  background-color: transparent;
+  color: inherit;
+  border-radius: 3px;
+}
+
+.error-msg button:hover {
+  color: var(--white);
+  background-color: rgb(255, 92, 92);
+}
