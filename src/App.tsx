@@ -140,7 +140,6 @@ function Main() {
   function removeFromPinnedTabs(index: number) {
     const newPinnedTabs = [...pinnedTabs];
     const selectedTab = newPinnedTabs.splice(index, 1);
-    if (selectedTab.length < 1 || pinnedTabs.length <= 1) return;
     setUnpinnedTabs(prev => [...prev, ...selectedTab]);
     setPinnedTabs(newPinnedTabs);
     navigate(`/${pinnedTabs[pinnedTabs.length - 1]}`);
@@ -172,6 +171,7 @@ function Main() {
   }
   
   const start: React.TouchEventHandler<HTMLElement> & React.MouseEventHandler<HTMLElement> = (event) => { 
+    event.preventDefault();
     const element = (event.target as HTMLElement)?.closest('.tab-container');
     if (!element) return;
     timeout.current = setTimeout(() => initiateDrag(element), delay);
