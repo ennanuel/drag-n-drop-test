@@ -34,6 +34,11 @@
   padding-right: 0;
 }
 
+.tab-container,
+.tab-container * {
+  user-select: none;
+}
+
 .tab-container.next-tab,
 .tab-container.next-tab * {
   cursor: grabbing;
