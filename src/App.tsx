@@ -169,7 +169,7 @@ function Main() {
 
       <div className="right flex flex-col flex-1">
         <div className="top-bar"></div>
-        <div className="relative flex justify-between">
+        <div className="tabs-container relative flex justify-between">
           <ul className="tabs flex flex-1">
             {
               pinnedTabs.map((pinnedTab, index) => (
