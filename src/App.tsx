@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Routes, Route, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { RxDrawingPin } from 'react-icons/rx';
-import { MdCancel, MdClose, MdKeyboardArrowDown } from 'react-icons/md';
+import React, { useEffect, useRef, useState } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { MdClose, MdKeyboardArrowDown } from 'react-icons/md';
 import { IconType } from 'react-icons';
 import { FiAlertTriangle } from 'react-icons/fi';
 

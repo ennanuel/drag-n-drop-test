@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { SelectedTab } from './constantsAndTypes';
 
 export default function DragBox({ content, position }: { content: SelectedTab | null, position: { x: number; y: number; tabIsBeingDragged: boolean; } }) {
