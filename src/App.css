@@ -174,7 +174,8 @@
 
 .tab .close-btn,
 .dragging .tab .close-btn,
-.forbidden .tab .close-btn {
+.forbidden .tab .close-btn,
+.next-tab .tab .close-btn {
   opacity: 0;
 }
 
