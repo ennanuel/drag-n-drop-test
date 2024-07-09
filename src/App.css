@@ -70,17 +70,22 @@
 }
 
 .tab {
-  padding: 0 8px 0 15px;
-  gap: 10px;
-  height: 40px;
   border-bottom: 1px solid var(--background);
   background-color: var(--white);
   color: var(--text-color);
   cursor: pointer;
 }
 
-.tab.pinned-tab {
-  padding: 0 15px;
+.tab-container:not(.pinned) .tab {
+  gap: 15px;
+}
+
+.tab .title-icon {
+  color: inherit;
+  text-align: left;
+  padding-left: 15px;
+  gap: 10px;
+  height: 40px;
 }
 
 .tab:hover,
@@ -155,6 +160,8 @@
 
 .tab .close-btn {
   color: var(--text-color);
+  padding: 0 10px;
+  height: 40px;
 }
 
 .tab:hover .close-btn {
@@ -162,7 +169,8 @@
 }
 
 .tab .close-btn,
-.dragging .tab .close-btn {
+.dragging .tab .close-btn,
+.forbidden .tab .close-btn {
   opacity: 0;
 }
 

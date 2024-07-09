@@ -1,117 +1,25 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Routes, Route, NavLink, useNavigate } from 'react-router-dom';
-import { IoBookOutline, IoCubeOutline, IoGridOutline, IoListOutline } from 'react-icons/io5';
-import { PiBank, PiShoppingCart } from 'react-icons/pi';
-import { LuPhoneCall } from 'react-icons/lu';
-import { GoGear, GoPersonAdd } from 'react-icons/go';
-import { BsShopWindow, BsWindow } from 'react-icons/bs';
-import { TfiPieChart } from 'react-icons/tfi';
-import { AiOutlineMail } from 'react-icons/ai';
+import { Routes, Route, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { RxDrawingPin } from 'react-icons/rx';
 import { MdCancel, MdClose, MdKeyboardArrowDown } from 'react-icons/md';
 import { IconType } from 'react-icons';
 import { FiAlertTriangle } from 'react-icons/fi';
 
+import { TABS, SelectedTab } from './constantsAndTypes';
+
 
 import './App.css';
-
-const TABS = [
-  {
-    title: "Dashboard",
-    Icon: IoGridOutline,
-    isPinned: true
-  },
-  {
-    title: "Banking",
-    Icon: PiBank,
-    isPinned: true
-  },
-  {
-    title: "Telefonie",
-    Icon: LuPhoneCall,
-    isPinned: true
-  },
-  {
-    title: "Accounting",
-    Icon: GoPersonAdd,
-    isPinned: true
-  },
-  {
-    title: "Verkauf",
-    Icon: BsShopWindow,
-    isPinned: false
-  },
-  {
-    title: "Statistik",
-    Icon: TfiPieChart,
-    isPinned: false
-  },
-  {
-    title: "Post Office",
-    Icon: AiOutlineMail,
-    isPinned: false
-  },
-  {
-    title: "Administration",
-    Icon: GoGear,
-    isPinned: false
-  },
-  {
-    title: "Help",
-    Icon: IoBookOutline,
-    isPinned: false
-  },
-  {
-    title: "Warenbestand",
-    Icon: IoCubeOutline,
-    isPinned: false
-  },
-  {
-    title: "Auswallisten",
-    Icon: IoListOutline,
-    isPinned: false
-  },
-  {
-    title: "Einkauf",
-    Icon: PiShoppingCart,
-    isPinned: false
-  },
-  {
-    title: "Rechn",
-    Icon: BsWindow,
-    isPinned: false
-  }
-]
-
-type SelectedTab = {
-  title: string;
-  Icon: IconType;
-  isPinned: boolean;
-  index: number;
-  nextIndex?: number;
-  width: number;
-  canMove: boolean;
-};
-
-function Box({ content, position }: { content: SelectedTab | null, position: { x: number; y: number; tabIsBeingDragged: boolean; } }) {
-  const style = useMemo(() => ({ transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px))`, width: `${content?.width}px` }), [position, content]);
-
-  if (!content || !position?.tabIsBeingDragged) return;
-
-  return (
-    <div style={style} className="box flex items-center">
-      <content.Icon className="icon" size={15} />
-      <span>{content.title}</span>
-    </div>
-  )
-}
+import DragBox from './DragBox';
+import Tab from './Tab';
 
 function Main() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
-  const [pinnedTabs, setPinnedTabs] = useState<{ title: string; Icon: IconType }[]>(TABS.slice(0, 4));
-  const [unpinnedTabs, setUnpinnedTabs] = useState<{ title: string; Icon: IconType }[]>(TABS.slice(4,));
   const [showMoreTabs, setShowMoreTabs] = useState(true);
+
+  const [pinnedTabs, setPinnedTabs] = useState(TABS.slice(0, 4).map(item => ({ ...item, isPinned: true})));
+  const [unpinnedTabs, setUnpinnedTabs] = useState(TABS.slice(4,).map(item => ({ ...item, isPinned: false})));
 
   const [position, setPosition] = useState({ x: 0, y: 0, tabIsBeingDragged: false });
 
@@ -121,37 +29,49 @@ function Main() {
   const [tab, setTab] = useState<SelectedTab | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+
+
   function showError() {
     setError(`Cannot move ${tab?.isPinned ? 'pinned' : 'unpinned'} tab to ${tab?.isPinned ? 'unpinned' : 'pinned'} tabs`);
     setTimeout(clearError, 5000);
   };
+
+
   function clearError() {
     setError(null);
   }
 
-  function addToPinnedTabs(index: number) {
+  function navigateToTab(title: string) {
+    navigate(`/${title}`);
+  }
+
+  function addToPinnedTabs(index: number, title: string, dontNavigate?: boolean) {
     const newUnpinnedTabs = [...unpinnedTabs];
     const selectedTab = newUnpinnedTabs.splice(index, 1);
     if (selectedTab.length < 1) return;
-    setPinnedTabs(prev => [...prev, ...selectedTab]);
+    setPinnedTabs(prev => [...prev, ...selectedTab].map(tab => ({...tab, isPinned: true})));
     setUnpinnedTabs(newUnpinnedTabs);
+
+    if(!dontNavigate) navigateToTab(title);
   }
+
 
   function removeFromPinnedTabs(index: number) {
     const newPinnedTabs = [...pinnedTabs];
     const selectedTab = newPinnedTabs.splice(index, 1);
-    setUnpinnedTabs(prev => [...prev, ...selectedTab]);
+    setUnpinnedTabs(prev => [...prev, ...selectedTab].map(tab => ({ ...tab, isPinned: false })));
     setPinnedTabs(newPinnedTabs);
-    navigate(`/${pinnedTabs[pinnedTabs.length - 1]}`);
   }
 
-  const reorderTabs: React.SetStateAction<{ title: string; Icon: IconType }[]> = (prev) => {
+
+  const reorderTabs: React.SetStateAction<{ title: string; Icon: IconType; isPinned: boolean; }[]> = (prev) => {
     const tabs = [...prev];
     const currentTab = tabs.splice(Number(tab?.index), 1)
     if (currentTab.length < 1) return prev;
     tabs.splice(Number(tab?.nextIndex), 0, ...currentTab);
     return tabs;
   };
+
 
   function initiateDrag(element: Element) {
     const isPinned = element.classList.contains('pinned');
@@ -169,18 +89,23 @@ function Main() {
       canMove: true
     });
   }
+
   
   const start: React.TouchEventHandler<HTMLElement> & React.MouseEventHandler<HTMLElement> = (event) => { 
     event.preventDefault();
     const element = (event.target as HTMLElement)?.closest('.tab-container');
+
     if (!element) return;
     timeout.current = setTimeout(() => initiateDrag(element), delay);
   };
 
+
   const handleMove: React.MouseEventHandler<HTMLElement> & React.TouchEventHandler<HTMLElement> = (event) => {
     const element = (event.target as HTMLElement)?.closest('.tab-container');
+
     if (!tab || !element) return;
     const elementIsPinned = element.classList.contains('pinned');
+
     if ((elementIsPinned && tab.isPinned) || (!elementIsPinned && !tab.isPinned)) {
       element.classList.add('next-tab');
       setTab(prev => prev && ({ ...prev, nextIndex: Number(element.id), canMove: true }));
@@ -191,10 +116,12 @@ function Main() {
     };
   }
 
+
   const handleOut: React.MouseEventHandler<HTMLElement> & React.TouchEventHandler<HTMLElement> = (event) => { 
     const element = (event.target as HTMLElement)?.closest('.tab-container');
     element?.classList?.remove('next-tab', 'forbidden');
   }
+
 
   const end: React.TouchEventHandler<HTMLElement> & React.MouseEventHandler<HTMLElement> = () => { 
     reset();
@@ -211,6 +138,12 @@ function Main() {
     setPosition(prev => ({ ...prev, tabIsBeingDragged: false }));
     setTab(null);
   }
+
+  useEffect(() => { 
+    if (!pinnedTabs.some(pinnedTab => pinnedTab.title.replace(/(\W|\s|\d)+/ig, '').includes(pathname.replace(/(\W|\s|\d)+/ig, '')))) {
+      navigateToTab(pinnedTabs[pinnedTabs.length - 1]?.title || '');
+    }
+  }, [pinnedTabs])
 
   useEffect(() => { 
     const handleMouseMove = (event: MouseEvent) => {
@@ -231,7 +164,7 @@ function Main() {
 
   return (
     <div onMouseUp={reset} id="main" className="flex">
-      <Box content={tab} position={position} />
+      <DragBox content={tab} position={position} />
       <div className="left-bar"></div>
 
       <div className="right flex flex-col flex-1">
@@ -239,27 +172,22 @@ function Main() {
         <div className="relative flex justify-between">
           <ul className="tabs flex flex-1">
             {
-              pinnedTabs.map(({ title, Icon }, index) => (
-                <li
+              pinnedTabs.map((pinnedTab, index) => (
+                <Tab
+                  navigateToTab={navigateToTab}
                   key={index}
-                  id={`${index}`}
-                  className={`tab-container pinned relative ${index == tab?.index && position.tabIsBeingDragged && tab.isPinned ? 'dragging' : ''}`}
-                  onMouseDown={start}
-                  onMouseMove={handleMove}
-                  onMouseOut={handleOut}
-                  onMouseUp={end}
-                  onTouchStart={start}
-                  onTouchMove={handleMove}
-                  onTouchEnd={end}
-                >
-                    <NavLink to={`/${title}`} draggable={false} className={({ isActive }) => `tab ${isActive && 'active'} relative flex items-center justify-center`}>
-                      <Icon size={15} className="icon" />
-                      <span>{title}</span>
-                      <button onClick={() => removeFromPinnedTabs(index)} className="flex items-center justify-center close-btn">
-                        <MdCancel size={15} />
-                      </button>
-                    </NavLink>
-                </li>
+                  index={index}
+                  tab={pinnedTab}
+                  selectedTab={tab}
+                  pathname={pathname}
+                  start={start}
+                  end={end}
+                  handleMove={handleMove}
+                  handleOut={handleOut}
+                  addToPinnedTabs={addToPinnedTabs}
+                  removeFromPinnedTabs={removeFromPinnedTabs}
+                  tabIsBeingDragged={position.tabIsBeingDragged}
+                />
               ))
             }
           </ul>
@@ -273,28 +201,22 @@ function Main() {
                   showMoreTabs ?
                     <ul className="absolute unpinned-tabs flex flex-col flex flex-col">
                       {
-                        unpinnedTabs.map(({ title, Icon }, index) => (
-                          <li
+                        unpinnedTabs.map((unpinnedTab, index) => (
+                          <Tab
                             key={index}
-                            id={`${index}`}
-                            className={`tab-container relative ${tab?.index == index && position?.tabIsBeingDragged && !tab?.isPinned ? 'dragging' : ''}`}
-                            onMouseDown={start}
-                            onMouseUp={end}
-                            onMouseMove={handleMove}
-                            onMouseOut={handleOut}
-                            onTouchStart={start}
-                            onTouchMove={handleMove}
-                            onTouchEnd={end}
-                            onClick={() => addToPinnedTabs(index)}
-                          >
-                            <NavLink to={`/${title}`} draggable={false} className={({ isActive }) => `tab ${isActive && 'active'} relative flex items-center justify-between`}>
-                              <Icon size={15} className="icon" />
-                              <span className="flex-1">{title}</span>
-                              <button className="flex items-center justify-center close-btn">
-                                <RxDrawingPin size={15} />
-                              </button>
-                            </NavLink>
-                          </li>
+                            index={index}
+                            tab={unpinnedTab}
+                            selectedTab={tab}
+                            pathname={pathname}
+                            navigateToTab={navigateToTab}
+                            start={start}
+                            end={end}
+                            handleMove={handleMove}
+                            handleOut={handleOut}
+                            addToPinnedTabs={addToPinnedTabs}
+                            removeFromPinnedTabs={removeFromPinnedTabs}
+                            tabIsBeingDragged={position.tabIsBeingDragged}
+                          />
                         ))
                       }
                     </ul> :
