@@ -169,6 +169,10 @@ function Main() {
   }, [pinnedTabs, unpinnedTabs])
 
   useEffect(() => { 
+    const isMobile = window.innerWidth <= 1024 && window.innerHeight <= 1366;
+
+    const handleResize = () => setDelay(isMobile ? 2000 : 0);
+
     const handleWindowMove = (event: MouseEvent | TouchEvent) => {
       let x = 0, y = 0;
       if (event.type === 'mousemove') {
@@ -184,13 +188,8 @@ function Main() {
       setPosition({ x, y, tabIsBeingDragged: Boolean(tab) });
     };
 
-    const handleResize = () => {
-      const isMobile = window.innerWidth <= 1024 && window.innerHeight <= 1366;
-      setDelay(isMobile ? 2000 : 0);
-    }
-
-    window.addEventListener(delay === 2000 ? 'touchmove' : 'mousemove', handleWindowMove);
     window.addEventListener('resize', handleResize);
+    window.addEventListener(isMobile ? 'touchmove' : 'mousemove', handleWindowMove);
 
     return () => {
       window.removeEventListener('mousemove', handleWindowMove);
