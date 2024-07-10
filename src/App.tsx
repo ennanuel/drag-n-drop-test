@@ -159,20 +159,22 @@ function Main() {
       }
       setPosition({ x, y, tabIsBeingDragged: Boolean(tab) });
     };
+
     const handleResize = () => {
-      setDelay(window.innerWidth <= 1024 && window.innerHeight <= 1366 ? 2000 : 0);
+      const isMobile = window.innerWidth <= 1024 && window.innerHeight <= 1366;
+
+      setDelay(isMobile ? 2000 : 0);
+      window.addEventListener(isMobile ? 'touchmove' : 'mousemove', handleWindowMove)
     }
 
     window.addEventListener('resize', handleResize);
-    window.addEventListener(delay >= 2000 ? 'touchmove' : 'mousemove', handleWindowMove);
-    window.addEventListener('touchmove', handleWindowMove);
 
     return () => {
       window.removeEventListener('mousemove', handleWindowMove);
       window.removeEventListener('touchmove', handleWindowMove);
-      window.removeEventListener('resize', handleResize)
+      window.removeEventListener('resize', handleResize);
     }
-  }, [tab, delay])
+  }, [tab])
 
   return (
     <div onMouseUp={reset} id="main" className="flex">
