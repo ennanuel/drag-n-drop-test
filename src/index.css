@@ -9,6 +9,10 @@
   font-family: 'Poppins', sans-serif;
 }
 
+html {
+  overscroll-behavior: none;
+}
+
 :root {
   --background: rgb(241, 245, 248);
   --border: rgb(235, 240, 240);
