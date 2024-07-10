@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { MdClose, MdKeyboardArrowDown } from 'react-icons/md';
 import { IconType } from 'react-icons';
@@ -11,14 +11,34 @@ import { TABS, SelectedTab } from './constantsAndTypes';
 
 import './App.css';
 
+
 function Main() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
+  const savedTabOrder = useMemo<{ pinned: number[]; unpinned: number[]; }>(() => {
+    try {
+      const tabsOrder = JSON.parse(String(localStorage.getItem('tabsOrder')));
+      if (!tabsOrder) throw new Error('Nothing saved');
+      return tabsOrder;
+    } catch (error) {
+      return { pinned: [], unpinned: [] };
+    }
+  }, []);
+
+  function getTabs(tabType: 'pinned' | 'unpinned'): { id: number; title: string; Icon: IconType; isPinned: boolean; }[] {
+    const tabs = Boolean(savedTabOrder.pinned.length) && Boolean(savedTabOrder.unpinned.length) ?
+      TABS
+        .filter(item => savedTabOrder[tabType].includes(item.id))
+        .map(item => ({ ...item, isPinned: tabType === 'pinned' })) :
+      TABS.filter(item => (tabType === 'unpinned' ? !item.isPinned : item.isPinned));
+    return tabs;
+  }
+
   const [showMoreTabs, setShowMoreTabs] = useState(true);
 
-  const [pinnedTabs, setPinnedTabs] = useState(TABS.slice(0, 4).map(item => ({ ...item, isPinned: true})));
-  const [unpinnedTabs, setUnpinnedTabs] = useState(TABS.slice(4,).map(item => ({ ...item, isPinned: false})));
+  const [pinnedTabs, setPinnedTabs] = useState(() => getTabs('pinned'));
+  const [unpinnedTabs, setUnpinnedTabs] = useState(() => getTabs('unpinned'));
 
   const [position, setPosition] = useState({ x: 0, y: 0, tabIsBeingDragged: false });
 
@@ -29,47 +49,49 @@ function Main() {
   const [error, setError] = useState<string | null>(null);
 
 
+  function navigateToTab(title: string) {
+    navigate(`/${title}`);
+  }
 
   function showError() {
     setError(`Cannot move ${tab?.isPinned ? 'pinned' : 'unpinned'} tab to ${tab?.isPinned ? 'unpinned' : 'pinned'} tabs`);
     setTimeout(clearError, 5000);
-  };
-
+  }
 
   function clearError() {
     setError(null);
-  }
-
-  function navigateToTab(title: string) {
-    navigate(`/${title}`);
   }
 
   function addToPinnedTabs(index: number, title: string, dontNavigate?: boolean) {
     const newUnpinnedTabs = [...unpinnedTabs];
     const selectedTab = newUnpinnedTabs.splice(index, 1);
     if (selectedTab.length < 1) return;
-    setPinnedTabs(prev => [...prev, ...selectedTab].map(tab => ({...tab, isPinned: true})));
+    setPinnedTabs(prev => [...selectedTab, ...prev].map(tab => ({...tab, isPinned: true})));
     setUnpinnedTabs(newUnpinnedTabs);
 
-    if(!dontNavigate) navigateToTab(title);
+    if (dontNavigate) return;
+    navigateToTab(title);
   }
 
 
-  function removeFromPinnedTabs(index: number) {
+  function removeFromPinnedTabs(index: number, title: string) {
     const newPinnedTabs = [...pinnedTabs];
     const selectedTab = newPinnedTabs.splice(index, 1);
     setUnpinnedTabs(prev => [...prev, ...selectedTab].map(tab => ({ ...tab, isPinned: false })));
     setPinnedTabs(newPinnedTabs);
+
+    if (!pathname.replace(/(\W|\s|\d)/ig, '').includes(title.replace(/(\W|\s|\d)/ig, ''))) return;
+    navigateToTab(pinnedTabs[0]?.title || '');
   }
 
 
-  const reorderTabs: React.SetStateAction<{ title: string; Icon: IconType; isPinned: boolean; }[]> = (prev) => {
+  const reorderTabs: React.SetStateAction<{ id: number; title: string; Icon: IconType; isPinned: boolean; }[]> = (prev) => {
     const tabs = [...prev];
     const currentTab = tabs.splice(Number(tab?.index), 1)
     if (currentTab.length < 1) return prev;
     tabs.splice(Number(tab?.nextIndex), 0, ...currentTab);
     return tabs;
-  };
+  }
 
 
   function initiateDrag(element: Element) {
@@ -139,10 +161,12 @@ function Main() {
   }
 
   useEffect(() => { 
-    if (!pinnedTabs.some(pinnedTab => pinnedTab.title.replace(/(\W|\s|\d)+/ig, '').includes(pathname.replace(/(\W|\s|\d)+/ig, '')))) {
-      navigateToTab(pinnedTabs[pinnedTabs.length - 1]?.title || '');
-    }
-  }, [pinnedTabs])
+    const pinned = pinnedTabs.map(tab => tab.id);
+    const unpinned = unpinnedTabs.map(tab => tab.id);
+
+    const order = { pinned, unpinned };
+    localStorage.setItem('tabsOrder', JSON.stringify(order));
+  }, [pinnedTabs, unpinnedTabs])
 
   useEffect(() => { 
     const handleWindowMove = (event: MouseEvent | TouchEvent) => {
@@ -162,11 +186,10 @@ function Main() {
 
     const handleResize = () => {
       const isMobile = window.innerWidth <= 1024 && window.innerHeight <= 1366;
-
       setDelay(isMobile ? 2000 : 0);
-      window.addEventListener(isMobile ? 'touchmove' : 'mousemove', handleWindowMove)
     }
 
+    window.addEventListener(delay === 2000 ? 'touchmove' : 'mousemove', handleWindowMove);
     window.addEventListener('resize', handleResize);
 
     return () => {
@@ -174,7 +197,7 @@ function Main() {
       window.removeEventListener('touchmove', handleWindowMove);
       window.removeEventListener('resize', handleResize);
     }
-  }, [tab])
+  }, [tab, delay])
 
   return (
     <div onMouseUp={reset} id="main" className="flex">

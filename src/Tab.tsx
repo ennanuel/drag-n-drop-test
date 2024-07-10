@@ -10,7 +10,7 @@ type TabProps = {
     tab: { title: string, Icon: IconType, isPinned: boolean };
     index: number;
     tabIsBeingDragged: boolean;
-    removeFromPinnedTabs: (index: number) => void;
+    removeFromPinnedTabs: (index: number, title: string) => void;
     addToPinnedTabs: (index: number, title: string, dontNavigate?: boolean) => void;
     start: React.TouchEventHandler<HTMLElement> & React.MouseEventHandler<HTMLElement>;
     end: React.TouchEventHandler<HTMLElement> & React.MouseEventHandler<HTMLElement>;
@@ -40,7 +40,7 @@ const Tab = ({ selectedTab, tab, index, pathname, tabIsBeingDragged, removeFromP
                 </button>
                 {
                     tab.isPinned ?
-                        <button onClick={() => removeFromPinnedTabs(index)} className="flex items-center justify-center close-btn">
+                        <button onClick={() => removeFromPinnedTabs(index, tab.title)} className="flex items-center justify-center close-btn">
                             <MdCancel size={15} />
                         </button> :
                         <button onClick={() => addToPinnedTabs(index, tab.title, true)} className="flex items-center justify-center close-btn">
