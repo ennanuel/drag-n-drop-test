@@ -164,14 +164,15 @@ function Main() {
     }
 
     window.addEventListener('resize', handleResize);
-    window.addEventListener('mousemove', handleWindowMove);
+    window.addEventListener(delay >= 2000 ? 'touchmove' : 'mousemove', handleWindowMove);
     window.addEventListener('touchmove', handleWindowMove);
 
     return () => {
       window.removeEventListener('mousemove', handleWindowMove);
+      window.removeEventListener('touchmove', handleWindowMove);
       window.removeEventListener('resize', handleResize)
     }
-  }, [tab])
+  }, [tab, delay])
 
   return (
     <div onMouseUp={reset} id="main" className="flex">
