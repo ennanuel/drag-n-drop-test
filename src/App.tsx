@@ -278,7 +278,7 @@ function Main() {
         <div className="workspace relative flex flex-1">
           {
             error ?
-              <div className="absolute error-msg flex items-center justify-center">
+              <div className="absolute error-msg flex items-start justify-center">
                 <FiAlertTriangle size={13} />
                 <span>{error}</span>
                 <button onClick={clearError} className="flex items-center justify-center">

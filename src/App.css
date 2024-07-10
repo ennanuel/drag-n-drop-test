@@ -300,9 +300,13 @@
   background-color: rgb(255, 249, 249);
   border: 1px solid rgb(255, 241, 241);
   color: rgb(255, 92, 92);
-  padding: 0 10px 0 15px;
-  height: 40px;
+  padding: 8px 10px;
+  padding-right: 15px;
+  width: max-content;
+  max-width: 100%;
+  min-height: 40px;
   font-size: .75rem;
+  z-index: 99999;
   box-shadow:
     0 5px 10px rgba(139, 18, 18, 0.1),
     0 5px 20px rgba(139, 18, 18, 0.05);
@@ -321,6 +325,10 @@
 }
 
 @media (max-width: 1024px) {
+  .tabs:has(.dragging) {
+    overflow-x: hidden;
+  }
+
   .tab-container .tab .close-btn {
     opacity: 1;
   }
