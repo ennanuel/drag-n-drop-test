@@ -172,7 +172,6 @@ function Main() {
     const isMobile = window.innerWidth <= 1024 && window.innerHeight <= 1366;
 
     const handleResize = () => setDelay(isMobile ? 2000 : 0);
-
     const handleWindowMove = (event: MouseEvent | TouchEvent) => {
       let x = 0, y = 0;
       if (event.type === 'mousemove') {
