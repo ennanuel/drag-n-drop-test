@@ -25,9 +25,10 @@
   min-height: 41px;
   background-color: var(--white);
   overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior: none;
   max-width: calc(100vw - 52px);
   padding-right: 40px;
-  overflow-y: hidden;
 }
 
 .tabs-container:not(:has(.more-tabs)) .tabs {

@@ -80,8 +80,8 @@ function Main() {
     setUnpinnedTabs(prev => [...prev, ...selectedTab].map(tab => ({ ...tab, isPinned: false })));
     setPinnedTabs(newPinnedTabs);
 
-    if (!pathname.replace(/(\W|\s|\d)/ig, '').includes(title.replace(/(\W|\s|\d)/ig, ''))) return;
-    navigateToTab(pinnedTabs[0]?.title || '');
+    if (pathname.replace(/(\W|\s|\d)/ig, '').includes(title.replace(/(\W|\s|\d)/ig, ''))) return;
+    navigateToTab(newPinnedTabs[0]?.title || '');
   }
 
 
