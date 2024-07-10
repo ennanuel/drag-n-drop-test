@@ -4,12 +4,12 @@ import { MdClose, MdKeyboardArrowDown } from 'react-icons/md';
 import { IconType } from 'react-icons';
 import { FiAlertTriangle } from 'react-icons/fi';
 
-import { TABS, SelectedTab } from './constantsAndTypes';
-
-
-import './App.css';
 import DragBox from './DragBox';
 import Tab from './Tab';
+
+import { TABS, SelectedTab } from './constantsAndTypes';
+
+import './App.css';
 
 function Main() {
   const navigate = useNavigate();
@@ -145,18 +145,30 @@ function Main() {
   }, [pinnedTabs])
 
   useEffect(() => { 
-    const handleMouseMove = (event: MouseEvent) => {
-      setPosition({ x: event.clientX, y: event.clientY, tabIsBeingDragged: Boolean(tab) });
+    const handleWindowMove = (event: MouseEvent | TouchEvent) => {
+      let x = 0, y = 0;
+      if (event.type === 'mousemove') {
+        x = (event as MouseEvent).clientX;
+        y = (event as MouseEvent).clientY;
+      } else if (event.type === 'touchmove') {
+        const touch = (event as TouchEvent).touches || (event as TouchEvent).changedTouches;
+        if (Boolean(touch?.length)) {
+          x = touch[0].pageX;
+          y = touch[0].pageY;
+        }
+      }
+      setPosition({ x, y, tabIsBeingDragged: Boolean(tab) });
     };
     const handleResize = () => {
       setDelay(window.innerWidth <= 1024 && window.innerHeight <= 1366 ? 2000 : 0);
     }
 
     window.addEventListener('resize', handleResize);
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleWindowMove);
+    window.addEventListener('touchmove', handleWindowMove);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mousemove', handleWindowMove);
       window.removeEventListener('resize', handleResize)
     }
   }, [tab])
