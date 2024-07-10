@@ -7,10 +7,18 @@ import { FiAlertTriangle } from 'react-icons/fi';
 import DragBox from './DragBox';
 import Tab from './Tab';
 
-import { TABS, SelectedTab } from './constantsAndTypes';
+import { TABS, SelectedTab, TabDetails } from './constantsAndTypes';
 
 import './App.css';
 
+function getElementCoordinatesAndId(element: Element): TabDetails {
+  const rect = element.getBoundingClientRect();
+  const elementIsPinned = element.classList.contains('pinned');
+  const index = Number(element.id);
+  const title = String(element.getAttribute('title'));
+
+  return { elementIsPinned, title, index, xMin: rect.left, xMax: rect.width + rect.left, yMin: rect.top, yMax: rect.top + rect.height };
+}
 
 function Main() {
   const navigate = useNavigate();
@@ -32,6 +40,7 @@ function Main() {
         .filter(item => savedTabOrder[tabType].includes(item.id))
         .map(item => ({ ...item, isPinned: tabType === 'pinned' })) :
       TABS.filter(item => (tabType === 'unpinned' ? !item.isPinned : item.isPinned));
+    
     return tabs;
   }
 
@@ -39,6 +48,11 @@ function Main() {
 
   const [pinnedTabs, setPinnedTabs] = useState(() => getTabs('pinned'));
   const [unpinnedTabs, setUnpinnedTabs] = useState(() => getTabs('unpinned'));
+
+  const tabCoordinates = useMemo<TabDetails[]>(() => {
+    const tabElements = document.getElementsByClassName('tab-container');
+    return [...tabElements].map(getElementCoordinatesAndId);
+  }, [pinnedTabs, unpinnedTabs])
 
   const [position, setPosition] = useState({ x: 0, y: 0, tabIsBeingDragged: false });
 
@@ -97,6 +111,7 @@ function Main() {
   function initiateDrag(element: Element) {
     const isPinned = element.classList.contains('pinned');
     const index = Number(element.id);
+    const nextTitle = String(element.getAttribute('title'));
     const selectedTab = isPinned ? pinnedTabs[index] : unpinnedTabs[index];
 
     if (!selectedTab) return;
@@ -105,15 +120,17 @@ function Main() {
       ...selectedTab,
       isPinned,
       index,
+      nextTitle,
       nextIndex: index,
       width: element.clientWidth,
       canMove: true
     });
+
+    if (delay > 0) setPosition(prev => ({ ...prev, tabIsBeingDragged: true }));
   }
 
   
   const start: React.TouchEventHandler<HTMLElement> & React.MouseEventHandler<HTMLElement> = (event) => { 
-    event.preventDefault();
     const element = (event.target as HTMLElement)?.closest('.tab-container');
 
     if (!element) return;
@@ -121,26 +138,17 @@ function Main() {
   };
 
 
-  const handleMove: React.MouseEventHandler<HTMLElement> & React.TouchEventHandler<HTMLElement> = (event) => {
-    const element = (event.target as HTMLElement)?.closest('.tab-container');
+  const handleMove = ({ x, y }: { x: number, y: number }) => {
+    const tabElement = tabCoordinates.find(({ xMax, xMin, yMax, yMin }) => x > xMin && x <= xMax && y > yMin && y <= yMax);
 
-    if (!tab || !element) return;
-    const elementIsPinned = element.classList.contains('pinned');
-
-    if ((elementIsPinned && tab.isPinned) || (!elementIsPinned && !tab.isPinned)) {
-      element.classList.add('next-tab');
-      setTab(prev => prev && ({ ...prev, nextIndex: Number(element.id), canMove: true }));
-    }
-    else {
-      element.classList.add('forbidden');
-      setTab(prev => prev && ({ ...prev, canMove: false }));
+    if (!tab || !tabElement) {
+      setTab(prev => prev && ({ ...prev, nextTitle: '' }));
+      return;
     };
-  }
+    const { index: nextIndex, title: nextTitle, elementIsPinned } = tabElement;
 
-
-  const handleOut: React.MouseEventHandler<HTMLElement> & React.TouchEventHandler<HTMLElement> = (event) => { 
-    const element = (event.target as HTMLElement)?.closest('.tab-container');
-    element?.classList?.remove('next-tab', 'forbidden');
+    if (elementIsPinned === tab.isPinned) setTab(prev => prev && ({ ...prev, nextIndex, nextTitle, canMove: true }));
+    else setTab(prev => prev && ({ ...prev, nextIndex, nextTitle, canMove: false }));
   }
 
 
@@ -155,7 +163,6 @@ function Main() {
   };
 
   function reset() {
-    document.querySelectorAll('.tab-container').forEach(elem => elem.classList.remove('next-tab', 'forbidden'));
     setPosition(prev => ({ ...prev, tabIsBeingDragged: false }));
     setTab(null);
   }
@@ -169,11 +176,16 @@ function Main() {
   }, [pinnedTabs, unpinnedTabs])
 
   useEffect(() => { 
-    const isMobile = window.innerWidth <= 1024 && window.innerHeight <= 1366;
 
-    const handleResize = () => setDelay(isMobile ? 2000 : 0);
+    const handleDelay = () => {
+      const isMobile = window.innerWidth <= 1024 && window.innerHeight <= 1366
+      setDelay(isMobile ? 2000 : 0);
+    };
+
     const handleWindowMove = (event: MouseEvent | TouchEvent) => {
       let x = 0, y = 0;
+      const tabIsBeingDragged = Boolean(tab);
+
       if (event.type === 'mousemove') {
         x = (event as MouseEvent).clientX;
         y = (event as MouseEvent).clientY;
@@ -184,18 +196,24 @@ function Main() {
           y = touch[0].pageY;
         }
       }
-      setPosition({ x, y, tabIsBeingDragged: Boolean(tab) });
+      setPosition({ x, y, tabIsBeingDragged });
+
+      if (!tabIsBeingDragged) return;
+      handleMove({ x, y });
     };
 
-    window.addEventListener('resize', handleResize);
-    window.addEventListener(isMobile ? 'touchmove' : 'mousemove', handleWindowMove);
+    handleDelay();
+
+    window.addEventListener('resize', handleDelay);
+    window.addEventListener('mousemove', handleWindowMove);
+    window.addEventListener('touchmove', handleWindowMove);
 
     return () => {
       window.removeEventListener('mousemove', handleWindowMove);
       window.removeEventListener('touchmove', handleWindowMove);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', handleDelay);
     }
-  }, [tab, delay])
+  }, [tab])
 
   return (
     <div onMouseUp={reset} id="main" className="flex">
@@ -217,8 +235,6 @@ function Main() {
                   pathname={pathname}
                   start={start}
                   end={end}
-                  handleMove={handleMove}
-                  handleOut={handleOut}
                   addToPinnedTabs={addToPinnedTabs}
                   removeFromPinnedTabs={removeFromPinnedTabs}
                   tabIsBeingDragged={position.tabIsBeingDragged}
@@ -246,8 +262,6 @@ function Main() {
                             navigateToTab={navigateToTab}
                             start={start}
                             end={end}
-                            handleMove={handleMove}
-                            handleOut={handleOut}
                             addToPinnedTabs={addToPinnedTabs}
                             removeFromPinnedTabs={removeFromPinnedTabs}
                             tabIsBeingDragged={position.tabIsBeingDragged}

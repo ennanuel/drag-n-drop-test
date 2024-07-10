@@ -319,3 +319,17 @@
   color: var(--white);
   background-color: rgb(255, 92, 92);
 }
+
+@media (max-width: 1024px) {
+  .tab-container .tab .close-btn {
+    opacity: 1;
+  }
+
+  .tab-container .tab .close-btn:hover {
+    color: var(--text-color) !important;
+  }
+
+  .tab-container:hover .tab {
+    background-color: transparent;
+  }
+}

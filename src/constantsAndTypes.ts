@@ -91,6 +91,7 @@ export const TABS = [
 export type SelectedTab = {
   id: number;
   title: string;
+  nextTitle: string;
   Icon: IconType;
   isPinned: boolean;
   index: number;
@@ -98,3 +99,13 @@ export type SelectedTab = {
   width: number;
   canMove: boolean;
 };
+
+export type TabDetails = {
+  index: number;
+  title: string;
+  xMin: number;
+  xMax: number;
+  yMin: number;
+  yMax: number;
+  elementIsPinned: boolean;
+}
