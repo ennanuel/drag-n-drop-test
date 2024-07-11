@@ -1,4 +1,3 @@
-import React from 'react';
 
 import { MdCancel } from 'react-icons/md';
 import { SelectedTab } from './constantsAndTypes';
@@ -9,21 +8,20 @@ type TabProps = {
     selectedTab: SelectedTab | null;
     tab: { title: string, Icon: IconType, isPinned: boolean };
     index: number;
-    tabIsBeingDragged: boolean;
+    pathname: string;
     removeFromPinnedTabs: (index: number, title: string) => void;
     addToPinnedTabs: (index: number, title: string, dontNavigate?: boolean) => void;
-    start: React.TouchEventHandler<HTMLElement> & React.MouseEventHandler<HTMLElement>;
-    end: React.TouchEventHandler<HTMLElement> & React.MouseEventHandler<HTMLElement>;
     navigateToTab: (title: string) => void;
-    pathname: string;
+    start: React.MouseEventHandler<HTMLElement> & React.TouchEventHandler<HTMLElement>;
+    end: () => void;
 }
 
-const Tab = ({ selectedTab, tab, index, pathname, tabIsBeingDragged, removeFromPinnedTabs, addToPinnedTabs, start, end, navigateToTab }: TabProps) => {
+const Tab = ({ selectedTab, tab, index, pathname, removeFromPinnedTabs, addToPinnedTabs, start, end, navigateToTab }: TabProps) => {
     return (
         <li
             id={`${index}`}
             title={tab.title}
-            className={`tab-container ${tab.isPinned ? 'pinned' : ''} relative ${(selectedTab?.nextTitle === tab.title && tabIsBeingDragged) && (selectedTab?.isPinned === tab.isPinned ? 'next-tab' : 'forbidden')} ${index === selectedTab?.index && tabIsBeingDragged && (tab.isPinned === selectedTab?.isPinned) ? 'dragging' : ''}`}
+            className={`tab-container ${tab.isPinned ? 'pinned' : ''} relative ${(selectedTab?.nextTitle === tab.title && selectedTab.isBeingDragged) && (selectedTab?.isPinned === tab.isPinned ? 'next-tab' : 'forbidden')} ${index === selectedTab?.index && selectedTab.isBeingDragged && (tab.isPinned === selectedTab?.isPinned) ? 'dragging' : ''}`}
             onMouseDown={start}
             onMouseUp={end}
             onTouchStart={start}

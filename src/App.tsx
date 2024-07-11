@@ -17,7 +17,7 @@ function getElementCoordinatesAndId(element: Element): TabDetails {
   const index = Number(element.id);
   const title = String(element.getAttribute('title'));
 
-  return { elementIsPinned, title, index, xMin: rect.left, xMax: rect.width + rect.left, yMin: rect.top, yMax: rect.top + rect.height };
+  return { elementIsPinned, title, index, width: rect.width, xMin: rect.left, xMax: rect.width + rect.left, yMin: rect.top, yMax: rect.top + rect.height };
 }
 
 function Main() {
@@ -42,6 +42,11 @@ function Main() {
       TABS.filter(item => (tabType === 'unpinned' ? !item.isPinned : item.isPinned));
     
     return tabs;
+  };
+
+  function getTabCoordinates() {
+    const tabElements = document.getElementsByClassName('tab-container');
+    setTabCoordinates([...tabElements].map(getElementCoordinatesAndId))
   }
 
   const [showMoreTabs, setShowMoreTabs] = useState(true);
@@ -49,12 +54,9 @@ function Main() {
   const [pinnedTabs, setPinnedTabs] = useState(() => getTabs('pinned'));
   const [unpinnedTabs, setUnpinnedTabs] = useState(() => getTabs('unpinned'));
 
-  const tabCoordinates = useMemo<TabDetails[]>(() => {
-    const tabElements = document.getElementsByClassName('tab-container');
-    return [...tabElements].map(getElementCoordinatesAndId);
-  }, [pinnedTabs, unpinnedTabs])
+  const [tabCoordinates, setTabCoordinates] = useState<TabDetails[]>([]);
 
-  const [position, setPosition] = useState({ x: 0, y: 0, tabIsBeingDragged: false });
+  const [position, setPosition] = useState({ x: 0, y: 0 });
 
   const [delay, setDelay] = useState(0);
   const timeout = useRef<number>(0);
@@ -75,6 +77,8 @@ function Main() {
   function clearError() {
     setError(null);
   }
+
+  const getTabElement = ({ x, y }: { x: number; y: number }) => tabCoordinates.find(({ xMax, xMin, yMax, yMin }) => x > xMin && x <= xMax && y > yMin && y <= yMax);
 
   function addToPinnedTabs(index: number, title: string, dontNavigate?: boolean) {
     const newUnpinnedTabs = [...unpinnedTabs];
@@ -107,65 +111,77 @@ function Main() {
     return tabs;
   }
 
+  
+  function changePosition(event: Event ) {
+    let x = 0, y = 0;
 
-  function initiateDrag(element: Element) {
-    const isPinned = element.classList.contains('pinned');
-    const index = Number(element.id);
-    const nextTitle = String(element.getAttribute('title'));
-    const selectedTab = isPinned ? pinnedTabs[index] : unpinnedTabs[index];
+    if (event.type === 'mousemove' || event.type === 'mousedown') {
+      x = (event as MouseEvent).clientX;
+      y = (event as MouseEvent).clientY;
+    } else if (event.type === 'touchmove' || event.type === 'touchstart') {
+      const touch = (event as TouchEvent).touches || (event as TouchEvent).changedTouches;
+      if (Boolean(touch?.length)) {
+        x = touch[0].pageX;
+        y = touch[0].pageY;
+      }
+    }
+
+    return { x, y }
+  }
+
+
+  function initiateDrag(tabElement: TabDetails) {
+    const { elementIsPinned, index, title, width } = tabElement;
+    const selectedTab = tabElement.elementIsPinned ? pinnedTabs[index] : unpinnedTabs[index];
 
     if (!selectedTab) return;
     clearError();
     setTab({
       ...selectedTab,
-      isPinned,
-      index,
-      nextTitle,
+      isPinned: elementIsPinned,
+      index: index,
+      nextTitle: title,
       nextIndex: index,
-      width: element.clientWidth,
-      canMove: true
+      width: width,
+      canMove: true,
+      isBeingDragged: delay > 0
     });
-
-    if (delay > 0) setPosition(prev => ({ ...prev, tabIsBeingDragged: true }));
   }
 
   
   const start: React.TouchEventHandler<HTMLElement> & React.MouseEventHandler<HTMLElement> = (event) => { 
-    const element = (event.target as HTMLElement)?.closest('.tab-container');
-
-    if (!element) return;
-    timeout.current = setTimeout(() => initiateDrag(element), delay);
+    const { x, y } = changePosition((event as unknown) as Event);
+    const tabElement = getTabElement({ x, y });
+    setPosition({ x, y });
+    
+    if (!tabElement) return;
+    timeout.current = setTimeout(() => initiateDrag(tabElement), delay);
   };
 
 
   const handleMove = ({ x, y }: { x: number, y: number }) => {
-    const tabElement = tabCoordinates.find(({ xMax, xMin, yMax, yMin }) => x > xMin && x <= xMax && y > yMin && y <= yMax);
-
+    const tabElement = getTabElement({ x, y });
     if (!tab || !tabElement) {
       setTab(prev => prev && ({ ...prev, nextTitle: '' }));
-      return;
-    };
-    const { index: nextIndex, title: nextTitle, elementIsPinned } = tabElement;
-
-    if (elementIsPinned === tab.isPinned) setTab(prev => prev && ({ ...prev, nextIndex, nextTitle, canMove: true }));
-    else setTab(prev => prev && ({ ...prev, nextIndex, nextTitle, canMove: false }));
+    } else {
+      const { index: nextIndex, title: nextTitle, elementIsPinned } = tabElement;
+      if (elementIsPinned === tab.isPinned) setTab(prev => prev && ({ ...prev, nextIndex, nextTitle, canMove: true }));
+      else setTab(prev => prev && ({ ...prev, nextIndex, nextTitle, canMove: false }));
+    }
   }
 
 
-  const end: React.TouchEventHandler<HTMLElement> & React.MouseEventHandler<HTMLElement> = () => { 
+  const end = () => { 
     reset();
     clearTimeout(timeout.current);
 
-    if (!tab || !position?.tabIsBeingDragged) return;
+    if (!tab || !tab?.isBeingDragged) return;
     else if (!tab?.canMove) showError();
     else if (tab?.isPinned) setPinnedTabs(reorderTabs);
     else setUnpinnedTabs(reorderTabs);
   };
-
-  function reset() {
-    setPosition(prev => ({ ...prev, tabIsBeingDragged: false }));
-    setTab(null);
-  }
+  
+  const reset = () => setTab(null);
 
   useEffect(() => { 
     const pinned = pinnedTabs.map(tab => tab.id);
@@ -173,51 +189,44 @@ function Main() {
 
     const order = { pinned, unpinned };
     localStorage.setItem('tabsOrder', JSON.stringify(order));
+
+    getTabCoordinates();
   }, [pinnedTabs, unpinnedTabs])
 
   useEffect(() => { 
 
-    const handleDelay = () => {
+    const handleResize = () => {
       const isMobile = window.innerWidth <= 1024 && window.innerHeight <= 1366
       setDelay(isMobile ? 2000 : 0);
+      getTabCoordinates();
     };
 
     const handleWindowMove = (event: MouseEvent | TouchEvent) => {
-      let x = 0, y = 0;
+      const { x, y } = changePosition(event);
       const tabIsBeingDragged = Boolean(tab);
-
-      if (event.type === 'mousemove') {
-        x = (event as MouseEvent).clientX;
-        y = (event as MouseEvent).clientY;
-      } else if (event.type === 'touchmove') {
-        const touch = (event as TouchEvent).touches || (event as TouchEvent).changedTouches;
-        if (Boolean(touch?.length)) {
-          x = touch[0].pageX;
-          y = touch[0].pageY;
-        }
-      }
-      setPosition({ x, y, tabIsBeingDragged });
+      setPosition({ x, y });
+      setTab(prev => prev && { ...prev, isBeingDragged: tabIsBeingDragged });
 
       if (!tabIsBeingDragged) return;
       handleMove({ x, y });
     };
 
-    handleDelay();
+    handleResize();
 
-    window.addEventListener('resize', handleDelay);
+    window.addEventListener('resize', handleResize);
     window.addEventListener('mousemove', handleWindowMove);
     window.addEventListener('touchmove', handleWindowMove);
 
     return () => {
       window.removeEventListener('mousemove', handleWindowMove);
       window.removeEventListener('touchmove', handleWindowMove);
-      window.removeEventListener('resize', handleDelay);
+      window.removeEventListener('resize', handleResize);
     }
   }, [tab])
 
   return (
     <div onMouseUp={reset} id="main" className="flex">
-      <DragBox content={tab} position={position} />
+      <DragBox content={tab} position={position} tabIsBeingDragged={tab?.isBeingDragged} />
       <div className="left-bar"></div>
 
       <div className="right flex flex-col flex-1">
@@ -237,7 +246,6 @@ function Main() {
                   end={end}
                   addToPinnedTabs={addToPinnedTabs}
                   removeFromPinnedTabs={removeFromPinnedTabs}
-                  tabIsBeingDragged={position.tabIsBeingDragged}
                 />
               ))
             }
@@ -264,7 +272,6 @@ function Main() {
                             end={end}
                             addToPinnedTabs={addToPinnedTabs}
                             removeFromPinnedTabs={removeFromPinnedTabs}
-                            tabIsBeingDragged={position.tabIsBeingDragged}
                           />
                         ))
                       }

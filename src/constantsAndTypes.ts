@@ -94,6 +94,7 @@ export type SelectedTab = {
   nextTitle: string;
   Icon: IconType;
   isPinned: boolean;
+  isBeingDragged: boolean;
   index: number;
   nextIndex?: number;
   width: number;
@@ -103,9 +104,10 @@ export type SelectedTab = {
 export type TabDetails = {
   index: number;
   title: string;
+  elementIsPinned: boolean;
+  width: number;
   xMin: number;
   xMax: number;
   yMin: number;
   yMax: number;
-  elementIsPinned: boolean;
 }
