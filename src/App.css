@@ -325,7 +325,10 @@
 }
 
 @media (max-width: 1024px) {
-  .tabs:has(.dragging) {
+
+  .tabs:has(.dragging),
+  #root:has(.dragging) *,
+  #root:has(.dragging) {
     overflow-x: hidden;
   }
 
