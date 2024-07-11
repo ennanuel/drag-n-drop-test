@@ -327,9 +327,8 @@
 @media (max-width: 1024px) {
 
   .tabs:has(.dragging),
-  #root:has(.dragging) *,
   #root:has(.dragging) {
-    overflow-x: hidden;
+    overflow: hidden;
   }
 
   .tab-container .tab .close-btn {
